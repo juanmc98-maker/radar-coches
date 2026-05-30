@@ -4,6 +4,26 @@
 filtros.py — reglas de descarte ANTES de valorar.
 """
 
+import unicodedata
+
+
+def _norm(s: str) -> str:
+    """minúsculas y sin acentos, para comparar 'Citroën' con 'citroen'."""
+    s = unicodedata.normalize("NFKD", s or "")
+    s = "".join(ch for ch in s if not unicodedata.combining(ch))
+    return s.lower().strip()
+
+
+def es_modelo_bueno(coche: dict, cfg: dict) -> bool:
+    """¿El coche es uno de los modelos que buscamos? Si la lista está vacía, pasa todo."""
+    buenos = cfg.get("modelos_buenos", [])
+    if not buenos:
+        return True
+    texto = _norm(f"{coche.get('make') or ''} {coche.get('model') or ''} "
+                  f"{coche.get('title') or ''}")
+    return any(_norm(b) in texto for b in buenos)
+
+
 # Palabras que descartan un anuncio (se buscan en título y descripción)
 NEGATIVOS_DEFECTO = [
     "accidentado", "accidente", "siniestro", "siniestrado", "para piezas",
@@ -43,6 +63,9 @@ def tiene_etiqueta(coche: dict, cfg: dict) -> bool:
 
 def pasa_filtros_duros(coche: dict, cfg: dict) -> tuple[bool, str]:
     """Devuelve (pasa, motivo_si_no_pasa)."""
+    if not es_modelo_bueno(coche, cfg):
+        return False, "modelo no buscado"
+
     precio = coche.get("price")
     if precio is None:
         return False, "sin precio"

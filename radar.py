@@ -75,6 +75,41 @@ def guardar_vistos(s):
     json.dump(sorted(s), open(VISTOS, "w", encoding="utf-8"))
 
 
+# ---------------- memoria de precios (historial del mercado) ----------------
+MERCADO = BASE / "mercado.json"
+HISTORIAL_DIAS = 30
+
+
+def cargar_mercado():
+    if MERCADO.exists():
+        try:
+            return json.load(open(MERCADO, encoding="utf-8"))
+        except Exception:
+            return []
+    return []
+
+
+def guardar_mercado(m):
+    json.dump(m, open(MERCADO, "w", encoding="utf-8"), ensure_ascii=False)
+
+
+def actualizar_mercado(mercado, coches):
+    """Mete los coches de hoy en el historial y poda los de hace más de 30 días."""
+    from datetime import date, timedelta
+    hoy = date.today().isoformat()
+    por_id = {m["id"]: m for m in mercado}
+    for c in coches:
+        if not c.get("price"):
+            continue
+        por_id[c["id"]] = {
+            "id": c["id"], "make": c.get("make"), "model": c.get("model"),
+            "year": c.get("year"), "km": c.get("km"),
+            "price": c.get("price"), "fecha": hoy,
+        }
+    limite = (date.today() - timedelta(days=HISTORIAL_DIAS)).isoformat()
+    return [m for m in por_id.values() if m.get("fecha", hoy) >= limite]
+
+
 # ---------------- notificaciones ----------------
 def notif_whatsapp(coche, cfg):
     if not cfg.get("enabled"):
@@ -171,23 +206,30 @@ def pasada(cfg, headful):
     universo = portales._dedupe(crudos)
     log(f"Total bruto (deduplicado): {len(universo)}")
 
-    # 1) filtros duros
+    # 1) filtros duros (incluye: modelo buscado, precio, km, etiqueta, motor, negativos)
     candidatos = []
     for c in universo:
         ok, motivo = filtros.pasa_filtros_duros(c, cfg["busqueda"])
         if ok:
             candidatos.append(c)
-    log(f"Pasan filtros (precio/km/etiqueta/negativos): {len(candidatos)}")
+    log(f"Pasan filtros (modelo/precio/km/etiqueta/motor): {len(candidatos)}")
 
-    # 2) valorar contra el universo y quedarnos con chollos
+    # 1b) actualizar la MEMORIA DE PRECIOS con los coches de hoy
+    mercado = cargar_mercado()
+    mercado = actualizar_mercado(mercado, candidatos)
+    guardar_mercado(mercado)
+    log(f"Memoria de precios: {len(mercado)} coches acumulados "
+        f"(últimos {HISTORIAL_DIAS} días)")
+
+    # 2) valorar cada coche contra TODO el historial (no solo lo de hoy) y quedarnos con chollos
     chollos = []
     margen = cfg["busqueda"].get("margen_chollo_pct", 0)  # 0 = todo lo <= medio
     for c in candidatos:
-        valoracion.valorar(c, universo)
+        valoracion.valorar(c, mercado)
         if c["id"] in vistos:
             continue
         if c.get("dif_pct") is None:
-            # sin comps fiables: lo guardamos solo si se pide
+            # sin comparables suficientes todavía: solo si se pide
             if cfg["busqueda"].get("incluir_sin_valoracion", True):
                 chollos.append(c)
         elif c["dif_pct"] <= -margen:   # por debajo del mercado

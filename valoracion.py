@@ -11,7 +11,14 @@ Luego decimos cuánto está cada coche por debajo (o por encima) de esa mediana.
 """
 
 import statistics
+import unicodedata
 from difflib import SequenceMatcher
+
+
+def _n(s: str) -> str:
+    """minúsculas y sin acentos (Citroën == Citroen, León == Leon)."""
+    s = unicodedata.normalize("NFKD", s or "")
+    return "".join(ch for ch in s if not unicodedata.combining(ch)).lower().strip()
 
 # Margen de comparación
 YEAR_TOLERANCE = 1          # años arriba/abajo que consideramos "el mismo"
@@ -29,13 +36,13 @@ def son_comparables(coche: dict, otro: dict) -> bool:
     """¿'otro' sirve como comparable de 'coche'?"""
     if coche["id"] == otro["id"]:
         return False
-    # Marca debe coincidir
+    # Marca debe coincidir (sin acentos ni mayúsculas)
     if not coche.get("make") or not otro.get("make"):
         return False
-    if coche["make"].lower() != otro["make"].lower():
+    if _n(coche["make"]) != _n(otro["make"]):
         return False
     # Modelo: igual o muy parecido (Golf vs Golf Plus se aceptan)
-    m1, m2 = (coche.get("model") or ""), (otro.get("model") or "")
+    m1, m2 = _n(coche.get("model") or ""), _n(otro.get("model") or "")
     if m1 and m2 and _similar(m1, m2) < 0.6:
         return False
     # Año dentro de tolerancia
