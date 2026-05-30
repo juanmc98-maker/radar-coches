@@ -98,7 +98,9 @@ def buscar_apify(cfg_busqueda: dict, cfg_apify: dict) -> list[dict]:
         entrada = {k: v for k, v in a.get("input", {}).items()
                    if not str(k).startswith("_")}
         # Muchos actores aceptan una searchUrl; si está en el config la respetamos
-        print(f"  -> llamando a Apify ({source})...")
+        kw = entrada.get("keywords", "")
+        etiqueta = a.get("modelo") or kw or source
+        print(f"  -> buscando: {etiqueta}...")
         url = (f"https://api.apify.com/v2/acts/{actor}"
                f"/run-sync-get-dataset-items?token={token}")
         try:
@@ -109,7 +111,7 @@ def buscar_apify(cfg_busqueda: dict, cfg_apify: dict) -> list[dict]:
             datos = r.json()
             if not isinstance(datos, list):
                 datos = datos.get("items", []) if isinstance(datos, dict) else []
-            print(f"  -> {source}: {len(datos)} resultados de Apify")
+            print(f"  -> {etiqueta}: {len(datos)} encontrados")
             for raw in datos:
                 it = _norm_item(raw, source)
                 if it:

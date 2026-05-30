@@ -1,6 +1,6 @@
 {
-  "poll_interval_minutes": 60,
-  "_nota_coste": "Cada busqueda cuesta ~0,05$ en Apify (50 coches). 60 min = ~36$/mes. 120 min = ~18$/mes. 30 min = ~72$/mes. Ajusta este numero segun tu bolsillo.",
+  "poll_interval_minutes": 360,
+  "_nota_coste": "22 modelos. Coste realista ~0,35-0,45$ por pasada. Cada 360 min (6h) = 4 pasadas/dia = ~50-70$/mes en el peor caso (suele ser menos). Para gastar menos: sube el intervalo (480=8h, 720=12h) o quita modelos. Vigila el contador de Apify los primeros dias.",
   "portales_activos": {
     "wallapop": true,
     "cochesnet": false,
@@ -44,10 +44,10 @@
       "Sardanyola",
       "Matadepera"
     ],
-    "margen_chollo_pct": 0,
-    "_nota_margen": "0 = avisa de todo lo que esté en el precio medio o por debajo. Pon 5 para exigir al menos un 5% por debajo.",
-    "incluir_sin_valoracion": true,
-    "_nota_sinval": "true = te avisa también de coches sin comparables suficientes (no sabe si es chollo). Ponlo en false si solo quieres chollos confirmados.",
+    "margen_chollo_pct": 8,
+    "_nota_margen": "Solo avisa de coches al menos un 8% por debajo de la mediana de su mismo modelo. Sube a 12-15 para chollos mas gordos, baja a 5 para mas avisos.",
+    "incluir_sin_valoracion": false,
+    "_nota_sinval": "false = SOLO chollos confirmados (coches que el radar puede comparar con otros iguales). Asi no te llega morralla.",
     "palabras_negativas": [
       "accidentado",
       "accidente",
@@ -68,32 +68,506 @@
       "sin itv",
       "embargo",
       "vendido"
-    ]
+    ],
+    "motores_excluir": [
+      "ecoboost",
+      "puretech",
+      "pure tech",
+      "thp",
+      "tsi",
+      "tce",
+      "tfsi",
+      "dig-t",
+      "multiair",
+      "1.2 dig"
+    ],
+    "_nota_motores": "Coches con estos motores se descartan SIEMPRE (correa en aceite, cadenas que se estiran, etc). Edita la lista a tu gusto."
   },
   "apify": {
     "enabled": true,
-    "_nota": "Si un actor deja de funcionar, cambialo aqui sin tocar el codigo. El token NO va aqui: se mete como variable de entorno en el servidor por seguridad.",
+    "_nota": "Cada modelo de la lista = una busqueda (~3-5 centimos). Anade o quita modelos a tu gusto. El token se mete como variable de entorno en el servidor.",
     "token": "PONER_TOKEN_DE_APIFY",
     "actores": [
       {
         "source": "Wallapop",
+        "modelo": "VW Golf TDI",
         "actor": "rastriq~wallapop-cars-scraper",
-        "_nota_actor": "Wallapop Cars Scraper - Spain (rastriq). Devuelve marca/modelo/anio/km/precio/combustible/url.",
         "input": {
+          "keywords": "volkswagen golf tdi",
           "location": "barcelona",
-          "_nota_location": "Este actor SOLO acepta ciudades grandes: madrid, barcelona, valencia, sevilla... 'barcelona' cubre el area de Sabadell. El radio fino de 30km no se puede afinar aqui.",
           "minPrice": 3000,
           "maxPrice": 12000,
           "minYear": 2000,
-          "_nota_minyear": "Pongo 2000 (no 2006) para NO perder gasolina con etiqueta B de 2000-2005. El filtro fino diesel>=2006 lo aplica el programa.",
           "sellerType": "private",
-          "_nota_seller": "private = solo particulares (mejores margenes). Cambia a 'professional' para profesionales, o borra esta linea para ver ambos.",
           "orderBy": "most_relevance",
-          "maxItems": 50,
-          "_nota_maxitems": "50 coches por busqueda = ~0,05$ por busqueda. Subelo para mas cobertura (y mas coste).",
+          "maxItems": 35,
           "proxyConfiguration": {
             "useApifyProxy": true,
-            "apifyProxyGroups": ["RESIDENTIAL"],
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "SEAT Leon TDI",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "seat leon tdi",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Skoda Octavia TDI",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "skoda octavia tdi",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Audi A3 TDI",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "audi a3 tdi",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "SEAT Ibiza",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "seat ibiza",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Citroen C4 HDi",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "citroen c4 hdi",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Peugeot 308 HDi",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "peugeot 308 hdi",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Ford Focus TDCi",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "ford focus tdci",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Renault Megane dCi",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "renault megane dci",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Renault Clio dCi",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "renault clio dci",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Dacia Sandero",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "dacia sandero",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Nissan Qashqai dCi",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "nissan qashqai dci",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "VW Polo",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "volkswagen polo",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Toyota Yaris",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "toyota yaris",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Toyota Auris",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "toyota auris",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Honda Civic",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "honda civic",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Mazda 3 gasolina",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "mazda 3 gasolina",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Ford Focus gasolina",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "ford focus gasolina",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Mini Cooper S R53",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "mini cooper s r53",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "VW Scirocco",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "volkswagen scirocco",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Hyundai i30",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "hyundai i30",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
+            "apifyProxyCountry": "ES"
+          }
+        }
+      },
+      {
+        "source": "Wallapop",
+        "modelo": "Kia Ceed",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "input": {
+          "keywords": "kia ceed",
+          "location": "barcelona",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "sellerType": "private",
+          "orderBy": "most_relevance",
+          "maxItems": 35,
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": [
+              "RESIDENTIAL"
+            ],
             "apifyProxyCountry": "ES"
           }
         }

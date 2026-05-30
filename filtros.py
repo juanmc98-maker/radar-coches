@@ -64,6 +64,13 @@ def pasa_filtros_duros(coche: dict, cfg: dict) -> tuple[bool, str]:
         if mal.lower() in texto:
             return False, f"palabra negativa: '{mal}'"
 
+    # Motores a evitar (correa en aceite, cadenas problematicas, etc.)
+    texto_motor = ((coche.get("title") or "") + " "
+                   + (coche.get("version") or "")).lower()
+    for mal in cfg.get("motores_excluir", []):
+        if mal.lower() in texto_motor:
+            return False, f"motor a evitar: '{mal}'"
+
     # Radio: si el anuncio trae municipio y tenemos lista permitida, filtramos
     municipios = [m.lower() for m in cfg.get("municipios_30km", [])]
     if municipios and coche.get("city"):

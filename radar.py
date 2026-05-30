@@ -43,7 +43,23 @@ def cargar_cfg():
     if not CONFIG.exists():
         log("Falta config.json. Copia config.example.json y edítalo.")
         sys.exit(1)
-    return json.load(open(CONFIG, encoding="utf-8"))
+    cfg = json.load(open(CONFIG, encoding="utf-8"))
+    # Secretos en archivo aparte: NO se sube a GitHub y sobrevive a 'git pull',
+    # asi las actualizaciones no borran el token ni el WhatsApp.
+    secrets = BASE / "secrets.json"
+    if secrets.exists():
+        try:
+            sec = json.load(open(secrets, encoding="utf-8"))
+            if sec.get("apify_token"):
+                cfg.setdefault("apify", {})["token"] = sec["apify_token"]
+            if sec.get("wa_phone"):
+                wa = cfg.setdefault("notificaciones", {}).setdefault("whatsapp", {})
+                wa["phone"] = sec["wa_phone"]
+                wa["apikey"] = sec.get("wa_key", wa.get("apikey", ""))
+                wa["enabled"] = True
+        except Exception as e:
+            log(f"  !! No pude leer secrets.json: {e}")
+    return cfg
 
 
 def cargar_vistos():
@@ -117,7 +133,8 @@ def escribir_csv(coches, path):
 def pasada(cfg, headful):
     vistos = cargar_vistos()
     n = cfg["notificaciones"]
-    activos = [p for p, on in cfg["portales_activos"].items() if on]
+    activos = [p for p, on in cfg["portales_activos"].items()
+               if on and not str(p).startswith("_")]
     log(f"Portales activos: {', '.join(activos)}")
 
     crudos = []

@@ -16,7 +16,9 @@ from difflib import SequenceMatcher
 # Margen de comparación
 YEAR_TOLERANCE = 1          # años arriba/abajo que consideramos "el mismo"
 KM_TOLERANCE = 50000        # km arriba/abajo que consideramos "parecido"
-MIN_COMPS = 3               # nº mínimo de comparables para fiarnos de la mediana
+MIN_COMPS = 2               # nº mínimo de comparables para fiarnos de la mediana
+# (2 permite valorar modelos con pocos anuncios, como Mini R53 o Scirocco;
+#  aun así exige estar por debajo del margen para avisar)
 
 
 def _similar(a: str, b: str) -> float:
