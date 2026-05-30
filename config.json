@@ -68,6 +68,23 @@
       "vendido"
     ]
   },
+  "apify": {
+    "enabled": true,
+    "_nota": "Pon tu token de Apify abajo. Si un actor deja de funcionar, cambialo aqui sin tocar el codigo.",
+    "token": "PONER_TOKEN_DE_APIFY",
+    "actores": [
+      {
+        "source": "Wallapop",
+        "actor": "autoclient~wallapop-spain-scraper",
+        "input": {
+          "searchUrls": [
+            "https://es.wallapop.com/search?category_ids=100&min_sale_price=3000&max_sale_price=12000&max_km=200000&latitude=41.5463&longitude=2.1086&distance=30000&order_by=newest"
+          ],
+          "maxItems": 60
+        }
+      }
+    ]
+  },
   "notificaciones": {
     "csv": {
       "enabled": true,

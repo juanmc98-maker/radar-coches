@@ -26,6 +26,7 @@ from playwright.sync_api import sync_playwright
 
 import filtros
 import portales
+import apify_portales
 import valoracion
 
 BASE = Path(__file__).resolve().parent
@@ -120,24 +121,34 @@ def pasada(cfg, headful):
     log(f"Portales activos: {', '.join(activos)}")
 
     crudos = []
-    with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(
-            user_data_dir=str(PROFILE), headless=not headful,
-            locale="es-ES", timezone_id="Europe/Madrid",
-            viewport={"width": 1366, "height": 900},
-            user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                        "AppleWebKit/537.36 (KHTML, like Gecko) "
-                        "Chrome/124.0.0.0 Safari/537.36"))
-        for portal in activos:
-            log(f"Buscando en {portal}...")
-            try:
-                res = portales.ADAPTADORES[portal](ctx, cfg["busqueda"])
-                log(f"  -> {len(res)} anuncios recibidos")
-                crudos += res
-            except Exception as e:
-                log(f"  !! {portal} falló: {e}")
-            time.sleep(4)
-        ctx.close()
+    # --- MODO APIFY (recomendado en servidor): si hay apify activado, lo usamos ---
+    apify_cfg = cfg.get("apify", {})
+    if apify_cfg.get("enabled"):
+        log("Buscando vía Apify...")
+        try:
+            crudos += apify_portales.buscar_apify(cfg["busqueda"], apify_cfg)
+        except Exception as e:
+            log(f"  !! Apify falló: {e}")
+    else:
+        # --- MODO NAVEGADOR (Playwright): solo funciona donde no haya bloqueo ---
+        with sync_playwright() as p:
+            ctx = p.chromium.launch_persistent_context(
+                user_data_dir=str(PROFILE), headless=not headful,
+                locale="es-ES", timezone_id="Europe/Madrid",
+                viewport={"width": 1366, "height": 900},
+                user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                            "AppleWebKit/537.36 (KHTML, like Gecko) "
+                            "Chrome/124.0.0.0 Safari/537.36"))
+            for portal in activos:
+                log(f"Buscando en {portal}...")
+                try:
+                    res = portales.ADAPTADORES[portal](ctx, cfg["busqueda"])
+                    log(f"  -> {len(res)} anuncios recibidos")
+                    crudos += res
+                except Exception as e:
+                    log(f"  !! {portal} falló: {e}")
+                time.sleep(4)
+            ctx.close()
 
     # universo para valorar = TODO lo recogido (también lo ya visto sirve de comp)
     universo = portales._dedupe(crudos)

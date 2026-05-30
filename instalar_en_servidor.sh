@@ -56,6 +56,20 @@ else
   echo "    (No se han pasado datos de WhatsApp; los pondras a mano luego)"
 fi
 
+# 4c) Meter el token de Apify si se pasa (APIFY_TOKEN=... )
+if [ -n "$APIFY_TOKEN" ]; then
+  echo "    Configurando Apify..."
+  python3 - "$APIFY_TOKEN" <<'PY'
+import json, sys
+p = "/opt/radar/config.json"
+c = json.load(open(p))
+c.setdefault("apify", {})["enabled"] = True
+c["apify"]["token"] = sys.argv[1]
+json.dump(c, open(p, "w"), ensure_ascii=False, indent=2)
+print("    Apify configurado.")
+PY
+fi
+
 # 5) Servicio que mantiene el radar corriendo siempre
 echo "[5/6] Configurando el arranque automatico..."
 cat > /etc/systemd/system/radar.service <<'UNIT'
