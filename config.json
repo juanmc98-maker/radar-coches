@@ -80,7 +80,8 @@
         "actor": "rastriq~wallapop-cars-scraper",
         "_nota_actor": "Wallapop Cars Scraper - Spain (rastriq). Devuelve marca/modelo/anio/km/precio/combustible/url.",
         "input": {
-          "location": "sabadell",
+          "location": "barcelona",
+          "_nota_location": "Este actor SOLO acepta ciudades grandes: madrid, barcelona, valencia, sevilla... 'barcelona' cubre el area de Sabadell. El radio fino de 30km no se puede afinar aqui.",
           "minPrice": 3000,
           "maxPrice": 12000,
           "minYear": 2000,
