@@ -1,0 +1,87 @@
+{
+  "poll_interval_minutes": 30,
+  "portales_activos": {
+    "wallapop": true,
+    "cochesnet": true,
+    "milanuncios": true
+  },
+  "busqueda": {
+    "precio_min": 3000,
+    "precio_max": 12000,
+    "km_max": 200000,
+    "anio_min_gasolina": 2000,
+    "anio_min_diesel": 2006,
+    "_nota_etiqueta": "Para etiqueta B: diesel desde 2006. Si quieres tu regla original pon 2005, pero podrían colarse 'sin etiqueta'.",
+    "lat": 41.5463,
+    "lng": 2.1086,
+    "radio_km": 30,
+    "_nota_radio": "lat/lng = Sabadell. El radio solo lo respeta Wallapop por URL; en coches.net/milanuncios se afina con municipios_30km.",
+    "municipios_30km": [
+      "Sabadell",
+      "Terrassa",
+      "Barberà del Vallès",
+      "Badia del Vallès",
+      "Cerdanyola del Vallès",
+      "Ripollet",
+      "Montcada i Reixac",
+      "Sant Quirze del Vallès",
+      "Castellar del Vallès",
+      "Polinyà",
+      "Sentmenat",
+      "Palau-solità i Plegamans",
+      "Santa Perpètua de Mogoda",
+      "Mollet del Vallès",
+      "Sant Cugat del Vallès",
+      "Rubí",
+      "Granollers",
+      "Caldes de Montbui",
+      "Parets del Vallès",
+      "Montmeló",
+      "Martorell",
+      "Barcelona",
+      "Sardanyola",
+      "Matadepera"
+    ],
+    "margen_chollo_pct": 0,
+    "_nota_margen": "0 = avisa de todo lo que esté en el precio medio o por debajo. Pon 5 para exigir al menos un 5% por debajo.",
+    "incluir_sin_valoracion": true,
+    "_nota_sinval": "true = te avisa también de coches sin comparables suficientes (no sabe si es chollo). Ponlo en false si solo quieres chollos confirmados.",
+    "palabras_negativas": [
+      "accidentado",
+      "accidente",
+      "siniestro",
+      "siniestrado",
+      "para piezas",
+      "despiece",
+      "no arranca",
+      "no funciona",
+      "averiado",
+      "golpe",
+      "granizo",
+      "inundado",
+      "quemado",
+      "junta de culata",
+      "para exportar",
+      "exportación",
+      "sin itv",
+      "embargo",
+      "vendido"
+    ]
+  },
+  "notificaciones": {
+    "csv": {
+      "enabled": true,
+      "path": "chollos.csv"
+    },
+    "whatsapp": {
+      "enabled": true,
+      "phone": "PONER_NUMERO",
+      "apikey": "PONER_APIKEY"
+    },
+    "telegram": {
+      "enabled": false,
+      "bot_token": "TOKEN_DE_BOTFATHER",
+      "chat_id": "TU_CHAT_ID"
+    }
+  }
+}
