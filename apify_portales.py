@@ -43,7 +43,11 @@ def _norm_item(raw: dict, source: str) -> dict | None:
     if isinstance(loc, dict):
         city = loc.get("city") or loc.get("name") or ""
     else:
-        city = raw.get("city") or raw.get("province") or ""
+        city = str(loc)
+    if not city:
+        # rastriq/wallapop-cars-scraper trae "region" (p.ej. "Cataluña")
+        city = (raw.get("city") or raw.get("province")
+                or raw.get("region") or "")
 
     fuel = (raw.get("fuel") or raw.get("fuelType") or raw.get("engine")
             or raw.get("combustible") or "")
@@ -62,6 +66,8 @@ def _norm_item(raw: dict, source: str) -> dict | None:
         "model": (str(modelo).title() if modelo else None),
         "city": city,
         "url": url or "https://es.wallapop.com",
+        "seller_type": raw.get("seller_type") or raw.get("sellerType") or "",
+        "version": raw.get("version") or "",
     }
 
 
@@ -88,7 +94,9 @@ def buscar_apify(cfg_busqueda: dict, cfg_apify: dict) -> list[dict]:
         if not actor:
             continue
         # Construimos el input: lo que traiga el config + los filtros de precio/km
-        entrada = dict(a.get("input", {}))
+        # Quitamos las claves de notas (empiezan por "_") para no mandarlas al actor
+        entrada = {k: v for k, v in a.get("input", {}).items()
+                   if not str(k).startswith("_")}
         # Muchos actores aceptan una searchUrl; si está en el config la respetamos
         print(f"  -> llamando a Apify ({source})...")
         url = (f"https://api.apify.com/v2/acts/{actor}"

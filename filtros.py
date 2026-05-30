@@ -32,8 +32,10 @@ def tiene_etiqueta(coche: dict, cfg: dict) -> bool:
 
     if "diesel" in fuel or "diésel" in fuel or "gasoil" in fuel or "gasóleo" in fuel:
         return year >= min_die
-    if "gasolina" in fuel or "glp" in fuel or "gnc" in fuel or "híbrido" in fuel \
-       or "hibrido" in fuel or "eléctrico" in fuel or "electrico" in fuel:
+    if "gasolina" in fuel or "glp" in fuel or "gpl" in fuel or "gas licuado" in fuel \
+       or "autogas" in fuel or "autogás" in fuel or "gnc" in fuel \
+       or "híbrido" in fuel or "hibrido" in fuel or "eléctrico" in fuel \
+       or "electrico" in fuel:
         return year >= min_gas
     # Combustible desconocido -> exigimos el corte más restrictivo
     return year >= max(min_gas, min_die)

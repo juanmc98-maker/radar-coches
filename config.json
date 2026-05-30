@@ -1,9 +1,11 @@
 {
-  "poll_interval_minutes": 30,
+  "poll_interval_minutes": 60,
+  "_nota_coste": "Cada busqueda cuesta ~0,05$ en Apify (50 coches). 60 min = ~36$/mes. 120 min = ~18$/mes. 30 min = ~72$/mes. Ajusta este numero segun tu bolsillo.",
   "portales_activos": {
     "wallapop": true,
-    "cochesnet": true,
-    "milanuncios": true
+    "cochesnet": false,
+    "milanuncios": false,
+    "_nota": "Solo Wallapop por ahora (via Apify). Coches.net y Milanuncios se anadiran con sus propios actores mas adelante."
   },
   "busqueda": {
     "precio_min": 3000,
@@ -70,17 +72,29 @@
   },
   "apify": {
     "enabled": true,
-    "_nota": "Pon tu token de Apify abajo. Si un actor deja de funcionar, cambialo aqui sin tocar el codigo.",
+    "_nota": "Si un actor deja de funcionar, cambialo aqui sin tocar el codigo. El token NO va aqui: se mete como variable de entorno en el servidor por seguridad.",
     "token": "PONER_TOKEN_DE_APIFY",
     "actores": [
       {
         "source": "Wallapop",
-        "actor": "autoclient~wallapop-spain-scraper",
+        "actor": "rastriq~wallapop-cars-scraper",
+        "_nota_actor": "Wallapop Cars Scraper - Spain (rastriq). Devuelve marca/modelo/anio/km/precio/combustible/url.",
         "input": {
-          "searchUrls": [
-            "https://es.wallapop.com/search?category_ids=100&min_sale_price=3000&max_sale_price=12000&max_km=200000&latitude=41.5463&longitude=2.1086&distance=30000&order_by=newest"
-          ],
-          "maxItems": 60
+          "location": "sabadell",
+          "minPrice": 3000,
+          "maxPrice": 12000,
+          "minYear": 2000,
+          "_nota_minyear": "Pongo 2000 (no 2006) para NO perder gasolina con etiqueta B de 2000-2005. El filtro fino diesel>=2006 lo aplica el programa.",
+          "sellerType": "private",
+          "_nota_seller": "private = solo particulares (mejores margenes). Cambia a 'professional' para profesionales, o borra esta linea para ver ambos.",
+          "orderBy": "most_relevance",
+          "maxItems": 50,
+          "_nota_maxitems": "50 coches por busqueda = ~0,05$ por busqueda. Subelo para mas cobertura (y mas coste).",
+          "proxyConfiguration": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": ["RESIDENTIAL"],
+            "apifyProxyCountry": "ES"
+          }
         }
       }
     ]
