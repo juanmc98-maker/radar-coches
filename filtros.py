@@ -271,11 +271,26 @@ def pasa_filtros_moto(item: dict, cfg: dict) -> tuple[bool, str]:
 
 
 # ============================  CAMPERS / AUTOCARAVANAS  ============================
-# Señales fuertes de que es una camper/autocaravana (no un furgón de carga vacío)
+# Palabras de AUTOCARAVANA/camper inequívocas (vehículo seguro)
 _CAMPER_FUERTE = [
-    "autocaravana", "auto caravana", "camper", "camperizada", "camperizado",
-    "camperizacion", "motorhome", "motor home", "perfilada", "capuchina",
-    "integral", "furgo camper", "furgoneta camper", "furgon camper",
+    "autocaravana", "auto caravana", "motorhome", "motor home",
+    "camperizada", "camperizado", "camperizacion", "perfilada",
+    "capuchina", "integral",
+]
+# Palabras ambiguas: "camper" es tb marca de ZAPATOS y de MUEBLES; los modelos
+# (california, etc.) sin contexto no bastan. Exigen señal de vehículo.
+_CAMPER_DEBIL = [
+    "camper", "furgo camper", "furgoneta camper", "furgon camper",
+    "camper van", "campervan", "california", "marco polo", "westfalia",
+]
+# Señales de que detrás hay un VEHÍCULO (marca base / chasis / modelo)
+_VEHICULO_BASE = [
+    "fiat", "citroen", "peugeot", "ford", "mercedes", "renault",
+    "volkswagen", "iveco", "ducato", "jumper", "boxer", "transit",
+    "sprinter", "crafter", "master", "daily", "transporter", "trafic",
+    "hymer", "adria", "benimar", "knaus", "challenger", "chausson",
+    "rapido", "pilote", "burstner", "dethleffs", "carthago", "weinsberg",
+    "possl", "mclouis", "elnagh", "roller team", "sunlight", "dreamer",
 ]
 # Palabras de aseo/baño interior
 _BANO_PALABRAS = ["bano", "aseo", "wc", "inodoro", "cassette", "sanitario", "lavabo"]
@@ -285,14 +300,22 @@ _CAMPER_ACCESORIOS = [
     "calefaccion", "calefactor", "nevera", "placa solar", "placas solares",
     "deposito", "escalon", "estribera", "funda", "soporte", "recambio",
     "despiece", "piezas", "rueda", "neumatico", "espejo", "tapiceria",
-    "asiento", "claraboya", "ventana", "bomba de agua",
+    "asiento", "ventana", "bomba de agua", "mueble", "armario", "colchon",
+    "matalas", "matalàs", "cable", "inversor", "sandalia", "zapato",
+    "zapatilla", "bota",
 ]
 
 
 def es_camper(item: dict) -> bool:
-    """True si el anuncio es una camper / autocaravana."""
+    """True si el anuncio es una camper / autocaravana (vehículo, no zapatos/muebles)."""
     t = _texto_moto(item)
-    return any(p in t for p in _CAMPER_FUERTE)
+    if any(p in t for p in _CAMPER_FUERTE):
+        return True
+    # "camper" y modelos ambiguos: solo si hay señal clara de vehículo
+    if any(p in t for p in _CAMPER_DEBIL):
+        if item.get("year") or item.get("km") or any(b in t for b in _VEHICULO_BASE):
+            return True
+    return False
 
 
 def tiene_bano_ducha(item: dict) -> bool:
@@ -308,8 +331,8 @@ def tiene_bano_ducha(item: dict) -> bool:
 
 def _es_accesorio_camper(item: dict) -> bool:
     titulo = _norm(item.get("title") or "")
-    if any(p in titulo for p in _CAMPER_FUERTE):
-        return False  # el título ya dice camper/autocaravana
+    if any(p in titulo for p in (_CAMPER_FUERTE + _CAMPER_DEBIL)):
+        return False  # el título ya menciona camper/autocaravana
     return any(a in titulo for a in _CAMPER_ACCESORIOS)
 
 

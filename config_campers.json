@@ -9,8 +9,8 @@
   },
   "busqueda": {
     "precio_min": 6000,
-    "precio_max": 25000,
-    "_nota_precio": "Hasta 25.000 EUR (tu tope). Minimo 6.000 para colarse menos piezas/proyectos.",
+    "precio_max": 30000,
+    "_nota_precio": "Hasta 30.000 EUR (subido desde 25k: ahi aparecen ya las autocaravanas con bano+ducha). Minimo 6.000 para colarse menos piezas/proyectos.",
     "lat": 41.5483,
     "lng": 2.1075,
     "radio_km": 200,
@@ -35,11 +35,11 @@
         "_nota_formato": "formato=wallapop_camper normaliza marca/modelo/ano/km y se valora como un coche.",
         "input": {
           "start_urls": [
-            { "url": "https://es.wallapop.com/search?keywords=autocaravana&seller_type=private&order_by=newest&max_sale_price=25000&distance_in_km=200&latitude=41.5483&longitude=2.1075" },
-            { "url": "https://es.wallapop.com/search?keywords=camper&seller_type=private&order_by=newest&max_sale_price=25000&distance_in_km=200&latitude=41.5483&longitude=2.1075" },
-            { "url": "https://es.wallapop.com/search?keywords=furgoneta+camper&seller_type=private&order_by=newest&max_sale_price=25000&distance_in_km=200&latitude=41.5483&longitude=2.1075" },
-            { "url": "https://es.wallapop.com/search?keywords=autocaravana+bano&seller_type=private&order_by=newest&max_sale_price=25000&distance_in_km=200&latitude=41.5483&longitude=2.1075" },
-            { "url": "https://es.wallapop.com/search?keywords=motorhome&seller_type=private&order_by=newest&max_sale_price=25000&distance_in_km=200&latitude=41.5483&longitude=2.1075" }
+            { "url": "https://es.wallapop.com/search?keywords=autocaravana&seller_type=private&order_by=newest&max_sale_price=30000&distance_in_km=200&latitude=41.5483&longitude=2.1075" },
+            { "url": "https://es.wallapop.com/search?keywords=autocaravana+ducha&seller_type=private&order_by=newest&max_sale_price=30000&distance_in_km=200&latitude=41.5483&longitude=2.1075" },
+            { "url": "https://es.wallapop.com/search?keywords=camper+bano&seller_type=private&order_by=newest&max_sale_price=30000&distance_in_km=200&latitude=41.5483&longitude=2.1075" },
+            { "url": "https://es.wallapop.com/search?keywords=furgoneta+camper&seller_type=private&order_by=newest&max_sale_price=30000&distance_in_km=200&latitude=41.5483&longitude=2.1075" },
+            { "url": "https://es.wallapop.com/search?keywords=motorhome&seller_type=private&order_by=newest&max_sale_price=30000&distance_in_km=200&latitude=41.5483&longitude=2.1075" }
           ]
         }
       }
