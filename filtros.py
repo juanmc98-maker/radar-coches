@@ -249,6 +249,12 @@ def pasa_filtros_moto(item: dict, cfg: dict) -> tuple[bool, str]:
     if cfg.get("solo_4_tiempos", True) and any(d in t for d in _DOS_TIEMPOS):
         return False, "2 tiempos"
 
+    # horas: si el anuncio DECLARA horas y superan el tope, fuera
+    maxh = cfg.get("max_horas")
+    h = item.get("horas")
+    if maxh and h is not None and h > maxh:
+        return False, f"demasiadas horas (>{maxh})"
+
     # vendedor profesional fuera (solo particulares)
     st = (item.get("seller_type") or "").lower()
     if st and any(p in st for p in _PRO):

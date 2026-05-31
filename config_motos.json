@@ -16,6 +16,8 @@
     "_nota_zona": "lat/lng = Sabadell. El radio real lo pone la URL de busqueda (distance_in_km=100). El haversine solo descarta si el anuncio trae coordenadas claramente fuera.",
     "solo_4_tiempos": true,
     "_nota_4t": "Descarta lo que diga 2 tiempos / 2T. Lo que no lo diga se deja pasar (el texto no siempre lo aclara; se afina con resultados reales).",
+    "max_horas": 550,
+    "_nota_horas": "Si el anuncio dice las horas y superan 550, se descarta directamente. Si no las dice, se deja pasar (no se puede filtrar lo que no se sabe).",
     "margen_chollo_pct": 10,
     "_nota_margen": "Avisa de motos al menos un 10% por debajo de la mediana de su mismo modelo. Sube a 15-20 para gangas mas gordas.",
     "sospechoso_pct": 60,
@@ -36,11 +38,21 @@
         "_nota_formato": "formato=wallapop_moto hace que radar saque marca/modelo/ano/horas del TEXTO, porque el actor no rellena esos campos en acuaticas.",
         "input": {
           "start_urls": [
-            { "url": "https://es.wallapop.com/search?keywords=moto+de+agua&seller_type=private&order_by=newest&max_sale_price=15000&distance_in_km=100&latitude=41.5483&longitude=2.1075" },
-            { "url": "https://es.wallapop.com/search?keywords=jet+ski&seller_type=private&order_by=newest&max_sale_price=15000&distance_in_km=100&latitude=41.5483&longitude=2.1075" },
-            { "url": "https://es.wallapop.com/search?keywords=seadoo&seller_type=private&order_by=newest&max_sale_price=15000&distance_in_km=100&latitude=41.5483&longitude=2.1075" },
-            { "url": "https://es.wallapop.com/search?keywords=waverunner&seller_type=private&order_by=newest&max_sale_price=15000&distance_in_km=100&latitude=41.5483&longitude=2.1075" },
-            { "url": "https://es.wallapop.com/search?keywords=moto+acuatica&seller_type=private&order_by=newest&max_sale_price=15000&distance_in_km=100&latitude=41.5483&longitude=2.1075" }
+            {
+              "url": "https://es.wallapop.com/search?keywords=moto+de+agua&seller_type=private&order_by=newest&max_sale_price=15000&distance_in_km=100&latitude=41.5483&longitude=2.1075"
+            },
+            {
+              "url": "https://es.wallapop.com/search?keywords=jet+ski&seller_type=private&order_by=newest&max_sale_price=15000&distance_in_km=100&latitude=41.5483&longitude=2.1075"
+            },
+            {
+              "url": "https://es.wallapop.com/search?keywords=seadoo&seller_type=private&order_by=newest&max_sale_price=15000&distance_in_km=100&latitude=41.5483&longitude=2.1075"
+            },
+            {
+              "url": "https://es.wallapop.com/search?keywords=waverunner&seller_type=private&order_by=newest&max_sale_price=15000&distance_in_km=100&latitude=41.5483&longitude=2.1075"
+            },
+            {
+              "url": "https://es.wallapop.com/search?keywords=moto+acuatica&seller_type=private&order_by=newest&max_sale_price=15000&distance_in_km=100&latitude=41.5483&longitude=2.1075"
+            }
           ]
         }
       }
