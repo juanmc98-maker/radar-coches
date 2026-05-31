@@ -1,0 +1,16 @@
+CÓMO SUBIR config.json
+=======================
+
+1) Descomprime este zip. Quédate SOLO con "config.json"
+   (este _LEEME no hay que subirlo).
+
+2) En GitHub, en tu repo radar-coches:
+   - Botón "Add file" -> "Upload files"
+   - Arrastra "config.json" dentro (sobrescribe el que hay)
+   - Abajo: "Commit changes"
+
+3) En el servidor:
+   cd /opt/radar && git checkout -- config.json && git pull
+   sudo systemctl restart radar.service
+
+Listo. El bot de coches ya busca hasta 50.000 € con la lista ampliada.
