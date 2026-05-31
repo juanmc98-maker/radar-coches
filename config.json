@@ -9,7 +9,7 @@
   },
   "busqueda": {
     "precio_min": 3000,
-    "precio_max": 12000,
+    "precio_max": 50000,
     "km_max": 200000,
     "anio_min_gasolina": 2000,
     "anio_min_diesel": 2006,
