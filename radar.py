@@ -248,12 +248,68 @@ def escribir_csv_moto(items, path):
             ]) + "\n")
 
 
+def _etiqueta_camper(item):
+    """Cabecera de oportunidad para campers (se valora como un coche)."""
+    d = item.get("dif_pct")
+    if d is None:
+        return "🚐 NUEVA"
+    if d <= -15:
+        return f"🔥🔥 GANGA -{abs(d)}%"
+    if d <= -8:
+        return f"🔥 CHOLLO -{abs(d)}%"
+    if d < 0:
+        return f"✅ buen precio -{abs(d)}%"
+    return "🚐 NUEVA"
+
+
+def _km_txt(item):
+    return f"{item['km']:,} km".replace(",", ".") if item.get("km") else "km ?"
+
+
+def notif_whatsapp_camper(item, cfg):
+    if not cfg.get("enabled"):
+        return
+    desc = (f"-{abs(item['dif_pct'])}% vs mercado" if item.get("dif_pct") is not None
+            else "sin valoración fiable (pocos comparables)")
+    txt = (f"🚐 {_etiqueta_camper(item)} · {item['source']}\n"
+           f"{item['title']}\n"
+           f"💶 {item['price']} € ({desc})\n"
+           f"Medio: {item.get('precio_medio','?')} € · "
+           f"{item.get('year','?')} · {_km_txt(item)}\n{item['url']}")
+    try:
+        requests.get("https://api.callmebot.com/whatsapp.php",
+                     params={"phone": cfg["phone"], "text": txt, "apikey": cfg["apikey"]},
+                     timeout=20)
+    except Exception as e:
+        log(f"  !! WhatsApp: {e}")
+    time.sleep(3)
+
+
+def notif_telegram_camper(item, cfg):
+    if not cfg.get("enabled"):
+        return
+    desc = (f"-{abs(item['dif_pct'])}% vs mercado" if item.get("dif_pct") is not None
+            else "sin valoración fiable (pocos comparables)")
+    txt = (f"🚐 <b>{_etiqueta_camper(item)}</b> · {item['source']}\n"
+           f"{item['title']}\n"
+           f"💶 <b>{item['price']} €</b> ({desc})\n"
+           f"Medio: {item.get('precio_medio','?')} € · "
+           f"{item.get('year','?')} · {_km_txt(item)}\n{item['url']}")
+    try:
+        requests.post(f"https://api.telegram.org/bot{cfg['bot_token']}/sendMessage",
+                      data={"chat_id": cfg["chat_id"], "text": txt,
+                            "parse_mode": "HTML"}, timeout=15)
+    except Exception as e:
+        log(f"  !! Telegram: {e}")
+
+
 # ---------------- pasada completa ----------------
 def pasada(cfg, headful):
     vistos = cargar_vistos()
     n = cfg["notificaciones"]
     perfil = cfg.get("perfil", "coches")
     es_moto = (perfil == "motos")
+    es_camper = (perfil == "campers")
     activos = [p for p, on in cfg["portales_activos"].items()
                if on and not str(p).startswith("_")]
     log(f"Portales activos: {', '.join(activos)}")
@@ -298,6 +354,8 @@ def pasada(cfg, headful):
     for c in universo:
         if es_moto:
             ok, motivo = filtros.pasa_filtros_moto(c, cfg["busqueda"])
+        elif es_camper:
+            ok, motivo = filtros.pasa_filtros_camper(c, cfg["busqueda"])
         else:
             ok, motivo = filtros.pasa_filtros_duros(c, cfg["busqueda"])
         if ok:
@@ -356,11 +414,15 @@ def pasada(cfg, headful):
             if es_moto:
                 escribir_csv_moto(chollos, BASE / n["csv"].get("path", "chollos_motos.csv"))
             else:
+                # coches y campers comparten formato de CSV (anio/km/combustible)
                 escribir_csv(chollos, BASE / n["csv"].get("path", "chollos.csv"))
         for c in chollos:
             if es_moto:
                 notif_whatsapp_moto(c, n.get("whatsapp", {}), margen)
                 notif_telegram_moto(c, n.get("telegram", {}), margen)
+            elif es_camper:
+                notif_whatsapp_camper(c, n.get("whatsapp", {}))
+                notif_telegram_camper(c, n.get("telegram", {}))
             else:
                 notif_whatsapp(c, n.get("whatsapp", {}))
                 notif_telegram(c, n.get("telegram", {}))

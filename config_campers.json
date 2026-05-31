@@ -1,0 +1,64 @@
+{
+  "perfil": "campers",
+  "_perfil_nota": "Cerebro del 3er radar (campers/autocaravanas con bano y ducha). radar.py lo distingue por 'perfil'. Memoria propia: vistos_campers.json / mercado_campers.json.",
+  "poll_interval_minutes": 180,
+  "_nota_coste": "5 busquedas/pasada con el actor fayoussef (baratisimo). Cada 180 min = 8 pasadas/dia. Sube poll_interval (360=6h) para gastar aun menos.",
+  "portales_activos": {
+    "wallapop": true,
+    "_nota": "Solo Wallapop (via Apify, actor fayoussef) por ahora."
+  },
+  "busqueda": {
+    "precio_min": 6000,
+    "precio_max": 25000,
+    "_nota_precio": "Hasta 25.000 EUR (tu tope). Minimo 6.000 para colarse menos piezas/proyectos.",
+    "lat": 41.5483,
+    "lng": 2.1075,
+    "radio_km": 200,
+    "_nota_zona": "lat/lng = Sabadell. Radio amplio (200 km): una camper-chollo merece el viaje. El radio real lo pone distance_in_km en la URL.",
+    "requiere_bano_ducha": true,
+    "_nota_bano": "El filtro EXIGE bano interior con ducha (descarta furgos de carga vacias y camperizaciones sin aseo). La ducha exterior sola no cuenta.",
+    "margen_chollo_pct": 8,
+    "_nota_margen": "Avisa de campers al menos 8% por debajo de la mediana de su mismo modelo/ano/km. Sube a 12-15 para gangas mas gordas.",
+    "incluir_sin_valoracion": true,
+    "_nota_sinval": "true al principio: el mercado de campers tarda en tener comparables. Asi ves las novedades de particulares mientras aprende. Cuando mercado_campers.json tenga volumen, ponlo en false para recibir SOLO gangas confirmadas."
+  },
+  "apify": {
+    "enabled": true,
+    "_nota": "El token real lo coge de secrets.json (el mismo de coches y motos). Aqui queda el placeholder.",
+    "token": "PONER_TOKEN_DE_APIFY",
+    "actores": [
+      {
+        "source": "Wallapop",
+        "modelo": "Campers/autocaravanas (5 busquedas)",
+        "actor": "fayoussef~wallapop-scraper",
+        "formato": "wallapop_camper",
+        "_nota_formato": "formato=wallapop_camper normaliza marca/modelo/ano/km y se valora como un coche.",
+        "input": {
+          "start_urls": [
+            { "url": "https://es.wallapop.com/search?keywords=autocaravana&seller_type=private&order_by=newest&max_sale_price=25000&distance_in_km=200&latitude=41.5483&longitude=2.1075" },
+            { "url": "https://es.wallapop.com/search?keywords=camper&seller_type=private&order_by=newest&max_sale_price=25000&distance_in_km=200&latitude=41.5483&longitude=2.1075" },
+            { "url": "https://es.wallapop.com/search?keywords=furgoneta+camper&seller_type=private&order_by=newest&max_sale_price=25000&distance_in_km=200&latitude=41.5483&longitude=2.1075" },
+            { "url": "https://es.wallapop.com/search?keywords=autocaravana+bano&seller_type=private&order_by=newest&max_sale_price=25000&distance_in_km=200&latitude=41.5483&longitude=2.1075" },
+            { "url": "https://es.wallapop.com/search?keywords=motorhome&seller_type=private&order_by=newest&max_sale_price=25000&distance_in_km=200&latitude=41.5483&longitude=2.1075" }
+          ]
+        }
+      }
+    ]
+  },
+  "notificaciones": {
+    "csv": {
+      "enabled": true,
+      "path": "chollos_campers.csv"
+    },
+    "whatsapp": {
+      "enabled": true,
+      "phone": "PONER_NUMERO",
+      "apikey": "PONER_APIKEY"
+    },
+    "telegram": {
+      "enabled": false,
+      "bot_token": "TOKEN_DE_BOTFATHER",
+      "chat_id": "TU_CHAT_ID"
+    }
+  }
+}

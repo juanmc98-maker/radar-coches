@@ -270,6 +270,90 @@ def pasa_filtros_moto(item: dict, cfg: dict) -> tuple[bool, str]:
     return True, ""
 
 
+# ============================  CAMPERS / AUTOCARAVANAS  ============================
+# Señales fuertes de que es una camper/autocaravana (no un furgón de carga vacío)
+_CAMPER_FUERTE = [
+    "autocaravana", "auto caravana", "camper", "camperizada", "camperizado",
+    "camperizacion", "motorhome", "motor home", "perfilada", "capuchina",
+    "integral", "furgo camper", "furgoneta camper", "furgon camper",
+]
+# Palabras de aseo/baño interior
+_BANO_PALABRAS = ["bano", "aseo", "wc", "inodoro", "cassette", "sanitario", "lavabo"]
+# Accesorios/piezas de camper (si el título es esto y no hay camper detrás -> fuera)
+_CAMPER_ACCESORIOS = [
+    "toldo", "claraboya", "portabicis", "porta bicis", "estor", "mosquitera",
+    "calefaccion", "calefactor", "nevera", "placa solar", "placas solares",
+    "deposito", "escalon", "estribera", "funda", "soporte", "recambio",
+    "despiece", "piezas", "rueda", "neumatico", "espejo", "tapiceria",
+    "asiento", "claraboya", "ventana", "bomba de agua",
+]
+
+
+def es_camper(item: dict) -> bool:
+    """True si el anuncio es una camper / autocaravana."""
+    t = _texto_moto(item)
+    return any(p in t for p in _CAMPER_FUERTE)
+
+
+def tiene_bano_ducha(item: dict) -> bool:
+    """Exige baño interior CON ducha (la ducha exterior sola no cuenta)."""
+    t = _texto_moto(item)
+    if "bano completo" in t or "aseo completo" in t or "bano con ducha" in t:
+        return True
+    tiene_ducha = "ducha" in t
+    solo_ducha_ext = ("ducha exterior" in t) and (t.count("ducha") == 1)
+    tiene_bano = any(b in t for b in _BANO_PALABRAS)
+    return tiene_ducha and tiene_bano and not solo_ducha_ext
+
+
+def _es_accesorio_camper(item: dict) -> bool:
+    titulo = _norm(item.get("title") or "")
+    if any(p in titulo for p in _CAMPER_FUERTE):
+        return False  # el título ya dice camper/autocaravana
+    return any(a in titulo for a in _CAMPER_ACCESORIOS)
+
+
+def pasa_filtros_camper(item: dict, cfg: dict) -> tuple[bool, str]:
+    """Filtros duros para campers/autocaravanas con baño y ducha."""
+    if not es_camper(item):
+        return False, "no es camper/autocaravana"
+
+    t = _texto_moto(item)
+
+    # alquiler fuera
+    for a in _ALQUILER:
+        if a in t:
+            return False, f"alquiler ('{a.strip()}')"
+
+    # accesorio / pieza suelta
+    if _es_accesorio_camper(item):
+        return False, "accesorio/pieza suelta"
+
+    # tiene que llevar baño + ducha (requisito de Juan)
+    if not tiene_bano_ducha(item):
+        return False, "sin bano/ducha"
+
+    # vendedor profesional fuera (solo particulares)
+    st = (item.get("seller_type") or "").lower()
+    if st and any(p in st for p in _PRO):
+        return False, "vendedor profesional"
+
+    # precio
+    precio = item.get("price")
+    if precio is None:
+        return False, "sin precio"
+    if precio < cfg.get("precio_min", 6000):
+        return False, "precio por debajo del minimo"
+    if precio > cfg.get("precio_max", 25000):
+        return False, "precio por encima del maximo"
+
+    # zona
+    if not en_radio(item, cfg):
+        return False, "fuera de radio"
+
+    return True, ""
+
+
 if __name__ == "__main__":
     cfg = {"anio_min_gasolina": 2000, "anio_min_diesel": 2006}
     pruebas = [

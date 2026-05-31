@@ -217,6 +217,68 @@ def _norm_wallapop_moto(raw: dict, source: str) -> dict | None:
     }
 
 
+def _norm_wallapop_camper(raw: dict, source: str) -> dict | None:
+    """Normaliza una camper/autocaravana (actor fayoussef/wallapop-scraper).
+    Se valora como un coche: por marca/modelo + año + km."""
+    title = (raw.get("title") or raw.get("name") or "").strip()
+    price = (raw.get("price") or raw.get("salePrice") or raw.get("cash"))
+    if isinstance(price, dict):
+        price = price.get("amount") or price.get("cash")
+    if not title and price is None:
+        return None
+
+    slug = raw.get("slug") or raw.get("web_slug") or ""
+    url = (raw.get("listing_url") or raw.get("share_url") or raw.get("url")
+           or raw.get("link") or slug or "")
+    if url and not str(url).startswith("http"):
+        url = f"https://es.wallapop.com/item/{url}"
+    item_id = (raw.get("item_id") or raw.get("id") or slug or title[:25])
+
+    desc = raw.get("description") or ""
+    marca = (str(raw.get("brand")).lower() if raw.get("brand") else None)
+    modelo = (str(raw.get("model")).lower() if raw.get("model") else None)
+    anyo = num(raw.get("year")) or _extraer_anyo(f"{title} {desc}")
+    km = num(raw.get("km") or raw.get("kms"))
+    fuel = (raw.get("fuel") or raw.get("combustible") or "").lower()
+
+    loc = raw.get("location") or {}
+    city, lat, lng = "", None, None
+    if isinstance(loc, dict):
+        city = loc.get("city") or loc.get("name") or ""
+        lat = loc.get("latitude") or loc.get("lat")
+        lng = loc.get("longitude") or loc.get("lng")
+    if lat is None:
+        lat = raw.get("latitude")
+    if lng is None:
+        lng = raw.get("longitude")
+    if not city:
+        city = raw.get("city") or raw.get("province") or ""
+
+    user = raw.get("user") if isinstance(raw.get("user"), dict) else {}
+    seller = (raw.get("seller_type") or raw.get("sellerType")
+              or raw.get("type") or user.get("type") or "")
+
+    return {
+        "id": f"{source.lower()}_{item_id}",
+        "source": source,
+        "title": title,
+        "description": desc,
+        "price": num(price),
+        "year": anyo,
+        "km": km,
+        "fuel": fuel,
+        "make": marca,
+        "model": (modelo.title() if modelo else None),
+        "city": city,
+        "lat": (float(lat) if _isnum(lat) else None),
+        "lng": (float(lng) if _isnum(lng) else None),
+        "url": url or "https://es.wallapop.com",
+        "seller_type": str(seller).lower(),
+        "version": "",
+        "perfil": "camper",
+    }
+
+
 def buscar_apify(cfg_busqueda: dict, cfg_apify: dict) -> list[dict]:
     """
     Llama a cada actor de Apify configurado y devuelve los anuncios normalizados.
@@ -241,7 +303,10 @@ def buscar_apify(cfg_busqueda: dict, cfg_apify: dict) -> list[dict]:
             continue
         # Normalizador: motos de agua sacan datos del texto; coches van estándar
         normaliza = (_norm_wallapop_moto
-                     if a.get("formato") == "wallapop_moto" else _norm_item)
+                     if a.get("formato") == "wallapop_moto"
+                     else _norm_wallapop_camper
+                     if a.get("formato") == "wallapop_camper"
+                     else _norm_item)
         # Construimos el input: lo que traiga el config + los filtros de precio/km
         # Quitamos las claves de notas (empiezan por "_") para no mandarlas al actor
         entrada = {k: v for k, v in a.get("input", {}).items()
