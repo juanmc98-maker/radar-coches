@@ -44,8 +44,8 @@
       "Sardanyola",
       "Matadepera"
     ],
-    "margen_chollo_pct": 8,
-    "_nota_margen": "Solo avisa de coches al menos un 8% por debajo de la mediana de su mismo modelo. Sube a 12-15 para chollos mas gordos, baja a 5 para mas avisos.",
+    "margen_chollo_pct": 5,
+    "_nota_margen": "Solo avisa de coches al menos un 5% por debajo de la mediana de su mismo modelo. Sube a 12-15 para chollos mas gordos, baja a 5 para mas avisos.",
     "incluir_sin_valoracion": false,
     "_nota_sinval": "false = SOLO chollos confirmados (coches que el radar puede comparar con otros iguales). Asi no te llega morralla.",
     "palabras_negativas": [
