@@ -119,7 +119,7 @@
         "input": {
           "location": "barcelona",
           "minPrice": 3000,
-          "maxPrice": 12000,
+          "maxPrice": 50000,
           "minYear": 2000,
           "sellerType": "private",
           "orderBy": "newest",
