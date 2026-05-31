@@ -80,6 +80,60 @@ def valorar(coche: dict, universo: list[dict]) -> dict:
     return coche
 
 
+# ============================================================
+#  VALORACIÓN POR HORAS (perfil motos de agua)
+#  Compara por marca+modelo+año y HORAS (en vez de km).
+#  Marca "sospechoso" si el precio está a -60% o más de la mediana
+#  (suele ser timo, error de tecleo o señal/reserva, no precio real).
+# ============================================================
+HORAS_TOLERANCE = 60        # horas arriba/abajo que consideramos "parecido"
+MIN_COMPS_MOTO = 2
+SOSPECHOSO_PCT = 60
+
+
+def son_comparables_moto(item: dict, otro: dict) -> bool:
+    if item["id"] == otro["id"]:
+        return False
+    if not item.get("make") or not otro.get("make"):
+        return False
+    if _n(item["make"]) != _n(otro["make"]):
+        return False
+    m1, m2 = _n(item.get("model") or ""), _n(otro.get("model") or "")
+    if m1 and m2 and _similar(m1, m2) < 0.55:
+        return False
+    if item.get("year") and otro.get("year"):
+        if abs(int(item["year"]) - int(otro["year"])) > 2:
+            return False
+    # horas: solo exigimos cercanía si AMBOS tienen horas (a menudo faltan)
+    if item.get("horas") and otro.get("horas"):
+        if abs(int(item["horas"]) - int(otro["horas"])) > HORAS_TOLERANCE:
+            return False
+    return True
+
+
+def valorar_moto(item: dict, universo: list[dict],
+                 sospechoso_pct: int = SOSPECHOSO_PCT) -> dict:
+    comps = [o for o in universo if son_comparables_moto(item, o) and o.get("price")]
+    precios = [o["price"] for o in comps]
+
+    if len(precios) < MIN_COMPS_MOTO or not item.get("price"):
+        item["precio_medio"] = round(statistics.median(precios)) if precios else None
+        item["n_comparables"] = len(precios)
+        item["dif_pct"] = None
+        item["fiable"] = False
+        item["sospechoso"] = False
+        return item
+
+    mediana = statistics.median(precios)
+    dif_pct = round((item["price"] - mediana) / mediana * 100, 1)
+    item["precio_medio"] = round(mediana)
+    item["n_comparables"] = len(precios)
+    item["dif_pct"] = dif_pct
+    item["fiable"] = True
+    item["sospechoso"] = dif_pct <= -abs(sospechoso_pct)
+    return item
+
+
 # --- prueba rápida con datos sintéticos (no toca internet) -------------------
 if __name__ == "__main__":
     universo = [

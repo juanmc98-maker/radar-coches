@@ -1,0 +1,65 @@
+{
+  "perfil": "motos",
+  "_perfil_nota": "Este archivo es el cerebro del 2o radar (motos de agua). El de coches sigue en config.json. radar.py los distingue por este campo 'perfil'.",
+  "poll_interval_minutes": 180,
+  "_nota_coste": "5 busquedas por pasada con el actor fayoussef (~0,25$/1000 anuncios, baratisimo). Cada 180 min (3h) = 8 pasadas/dia. El mercado de motos es pequeno, asi que el gasto sera muy bajo. Sube poll_interval (360=6h) si quieres gastar aun menos.",
+  "portales_activos": {
+    "wallapop": true,
+    "_nota": "Solo Wallapop (via Apify, actor fayoussef) por ahora."
+  },
+  "busqueda": {
+    "precio_min": 1500,
+    "precio_max": 15000,
+    "lat": 41.5483,
+    "lng": 2.1075,
+    "radio_km": 100,
+    "_nota_zona": "lat/lng = Sabadell. El radio real lo pone la URL de busqueda (distance_in_km=100). El haversine solo descarta si el anuncio trae coordenadas claramente fuera.",
+    "solo_4_tiempos": true,
+    "_nota_4t": "Descarta lo que diga 2 tiempos / 2T. Lo que no lo diga se deja pasar (el texto no siempre lo aclara; se afina con resultados reales).",
+    "margen_chollo_pct": 10,
+    "_nota_margen": "Avisa de motos al menos un 10% por debajo de la mediana de su mismo modelo. Sube a 15-20 para gangas mas gordas.",
+    "sospechoso_pct": 60,
+    "_nota_sospechoso": "Si una moto esta a -60% o mas de la mediana, se marca SOSPECHOSO (suele ser timo, error de tecleo o reserva/senal, no precio real).",
+    "incluir_sin_valoracion": true,
+    "_nota_sinval": "true al principio: el mercado de motos es pequeno y tarda dias en tener comparables. Asi ves las novedades de particulares mientras aprende. Cuando mercado_motos.json tenga volumen, ponlo en false para recibir SOLO gangas confirmadas."
+  },
+  "apify": {
+    "enabled": true,
+    "_nota": "El token real lo coge de secrets.json (el mismo del bot de coches). Aqui queda el placeholder.",
+    "token": "PONER_TOKEN_DE_APIFY",
+    "actores": [
+      {
+        "source": "Wallapop",
+        "modelo": "Motos de agua (5 busquedas)",
+        "actor": "fayoussef~wallapop-scraper",
+        "formato": "wallapop_moto",
+        "_nota_formato": "formato=wallapop_moto hace que radar saque marca/modelo/ano/horas del TEXTO, porque el actor no rellena esos campos en acuaticas.",
+        "input": {
+          "start_urls": [
+            { "url": "https://es.wallapop.com/search?keywords=moto+de+agua&seller_type=private&order_by=newest&max_sale_price=15000&distance_in_km=100&latitude=41.5483&longitude=2.1075" },
+            { "url": "https://es.wallapop.com/search?keywords=jet+ski&seller_type=private&order_by=newest&max_sale_price=15000&distance_in_km=100&latitude=41.5483&longitude=2.1075" },
+            { "url": "https://es.wallapop.com/search?keywords=seadoo&seller_type=private&order_by=newest&max_sale_price=15000&distance_in_km=100&latitude=41.5483&longitude=2.1075" },
+            { "url": "https://es.wallapop.com/search?keywords=waverunner&seller_type=private&order_by=newest&max_sale_price=15000&distance_in_km=100&latitude=41.5483&longitude=2.1075" },
+            { "url": "https://es.wallapop.com/search?keywords=moto+acuatica&seller_type=private&order_by=newest&max_sale_price=15000&distance_in_km=100&latitude=41.5483&longitude=2.1075" }
+          ]
+        }
+      }
+    ]
+  },
+  "notificaciones": {
+    "csv": {
+      "enabled": true,
+      "path": "chollos_motos.csv"
+    },
+    "whatsapp": {
+      "enabled": true,
+      "phone": "PONER_NUMERO",
+      "apikey": "PONER_APIKEY"
+    },
+    "telegram": {
+      "enabled": false,
+      "bot_token": "TOKEN_DE_BOTFATHER",
+      "chat_id": "TU_CHAT_ID"
+    }
+  }
+}

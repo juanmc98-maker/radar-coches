@@ -103,6 +103,149 @@ def pasa_filtros_duros(coche: dict, cfg: dict) -> tuple[bool, str]:
     return True, ""
 
 
+# ============================================================
+#  PERFIL MOTOS DE AGUA (jet ski) — segundo radar
+# ============================================================
+import math
+
+# Frases que SOLO existen en acuáticas: señal fuerte de moto de agua
+_MOTO_AGUA_FUERTE = [
+    "moto de agua", "moto acuatica", "motoacuatica", "jet ski", "jetski",
+    "jet-ski", "seadoo", "sea-doo", "sea doo", "waverunner", "wave runner",
+    "personal watercraft",
+]
+# Modelos acuáticos (refuerzan cuando van con marca acuática)
+_MOTO_AGUA_MODELOS = [
+    "gti", "gtx", "gtr", "rxp", "rxt", "spark", "wake", "fish pro", "fishpro",
+    "gp1800", "gp 1800", "vx cruiser", "vx deluxe", "vx limited", "fx cruiser",
+    "fx svho", "fx ho", "ex deluxe", "ex sport", "superjet", "super jet",
+    "jetblaster", "ultra 310", "ultra 300", "ultra lx", "stx", "sx-r",
+    "aquatrax",
+]
+# Estilos de moto de CALLE (si el anuncio trae motorbike_style con esto -> fuera)
+_ESTILOS_CALLE = [
+    "scooter", "naked", "sport", "sportbike", "trail", "custom", "enduro",
+    "cruiser", "touring", "cafe racer", "ciclomotor", "quad", "atv",
+    "supermotard", "trial", "scrambler",
+]
+# Accesorios / piezas sueltas (si el TÍTULO es esto y no hay marca/modelo -> fuera)
+_ACCESORIOS = [
+    "remolque", "carro", "funda", "tapa", "soporte", "recambio", "despiece",
+    "piezas", "accesorio", "chaleco", "boya", "ancla", "manillar", "asiento",
+    "tapizado", "helice", "rejilla", "turbina", "bujia", "intercooler",
+    "estator", "filtro", "bateria", "cargador", "plataforma", "rampa",
+    "toldo", "neopreno", "alarma",
+]
+# Pistas de ALQUILER (no compra a particular) -> fuera
+_ALQUILER = [
+    "alquiler", "alquilo", "se alquila", "alquilamos", "fianza", "/dia",
+    "euro/dia", "por horas", "media jornada", "jornada completa", "ruta guiada",
+    "excursion", "experiencia", "bautismo", "reserva tu", "reservas:",
+]
+# Señales de 2 tiempos (queremos SOLO 4T)
+_DOS_TIEMPOS = ["2 tiempos", "dos tiempos", " 2t", "(2t)", "2-tiempos"]
+# Vendedor profesional (queremos solo particulares)
+_PRO = ["pro", "professional", "profesional", "comercial", "store", "shop", "concesionario"]
+
+
+def _texto_moto(item: dict) -> str:
+    return _norm(f"{item.get('title') or ''} {item.get('description') or ''}")
+
+
+def es_moto_agua(item: dict) -> bool:
+    """True si el anuncio es claramente una moto de agua."""
+    t = _texto_moto(item)
+    if any(p in t for p in _MOTO_AGUA_FUERTE):
+        return True
+    marcas_acua = ["yamaha", "kawasaki", "honda", "polaris", "bombardier",
+                   "sea doo", "sea-doo", "seadoo"]
+    if any(m in t for m in marcas_acua) and any(x in t for x in _MOTO_AGUA_MODELOS):
+        return True
+    return False
+
+
+def _es_accesorio(item: dict) -> bool:
+    """Pieza/accesorio suelto: el título es un accesorio y no hay moto detrás."""
+    titulo = _norm(item.get("title") or "")
+    tiene_moto = item.get("make") or any(x in titulo for x in _MOTO_AGUA_MODELOS)
+    if tiene_moto:
+        return False
+    return any(a in titulo for a in _ACCESORIOS)
+
+
+def haversine_km(lat1, lng1, lat2, lng2) -> float:
+    R = 6371.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dl = math.radians(lng2 - lng1)
+    a = (math.sin(dphi / 2) ** 2
+         + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2)
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def en_radio(item: dict, cfg: dict) -> bool:
+    """Comprueba el radio desde Sabadell si el anuncio trae coordenadas.
+    Sin coordenadas no descartamos (la URL de búsqueda ya acota la zona)."""
+    lat, lng = item.get("lat"), item.get("lng")
+    if lat is None or lng is None:
+        return True
+    lat0 = cfg.get("lat", 41.5483)
+    lng0 = cfg.get("lng", 2.1075)
+    radio = cfg.get("radio_km", 100)
+    try:
+        return haversine_km(lat0, lng0, float(lat), float(lng)) <= radio + 5
+    except Exception:
+        return True
+
+
+def pasa_filtros_moto(item: dict, cfg: dict) -> tuple[bool, str]:
+    """Filtros duros para motos de agua. Devuelve (pasa, motivo_si_no_pasa)."""
+    if not es_moto_agua(item):
+        return False, "no es moto de agua"
+
+    t = _texto_moto(item)
+
+    # alquileres fuera
+    for a in _ALQUILER:
+        if a in t:
+            return False, f"alquiler ('{a.strip()}')"
+
+    # moto de calle (por estilo declarado o por modelo de carretera)
+    estilo = _norm(item.get("motorbike_style") or "")
+    if estilo and any(e in estilo for e in _ESTILOS_CALLE):
+        return False, f"moto de calle (estilo: {estilo})"
+    if any(x in t for x in ["xmax", "x max", "tmax", "t max", "pcx", "scooter de"]):
+        return False, "moto de calle (modelo)"
+
+    # accesorio / pieza suelta
+    if _es_accesorio(item):
+        return False, "accesorio/pieza suelta"
+
+    # 2 tiempos fuera (solo 4T)
+    if cfg.get("solo_4_tiempos", True) and any(d in t for d in _DOS_TIEMPOS):
+        return False, "2 tiempos"
+
+    # vendedor profesional fuera (solo particulares)
+    st = (item.get("seller_type") or "").lower()
+    if st and any(p in st for p in _PRO):
+        return False, "vendedor profesional"
+
+    # precio
+    precio = item.get("price")
+    if precio is None:
+        return False, "sin precio"
+    if precio < cfg.get("precio_min", 1500):
+        return False, "precio por debajo del minimo"
+    if precio > cfg.get("precio_max", 15000):
+        return False, "precio por encima del maximo"
+
+    # zona
+    if not en_radio(item, cfg):
+        return False, "fuera de radio"
+
+    return True, ""
+
+
 if __name__ == "__main__":
     cfg = {"anio_min_gasolina": 2000, "anio_min_diesel": 2006}
     pruebas = [

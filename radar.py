@@ -39,11 +39,12 @@ def log(m):
     print(f"[{datetime.now():%H:%M:%S}] {m}", flush=True)
 
 
-def cargar_cfg():
-    if not CONFIG.exists():
-        log("Falta config.json. Copia config.example.json y edítalo.")
+def cargar_cfg(path=CONFIG):
+    path = Path(path)
+    if not path.exists():
+        log(f"Falta {path.name}. Copia el ejemplo y edítalo.")
         sys.exit(1)
-    cfg = json.load(open(CONFIG, encoding="utf-8"))
+    cfg = json.load(open(path, encoding="utf-8"))
     # Secretos en archivo aparte: NO se sube a GitHub y sobrevive a 'git pull',
     # asi las actualizaciones no borran el token ni el WhatsApp.
     secrets = BASE / "secrets.json"
@@ -103,7 +104,7 @@ def actualizar_mercado(mercado, coches):
             continue
         por_id[c["id"]] = {
             "id": c["id"], "make": c.get("make"), "model": c.get("model"),
-            "year": c.get("year"), "km": c.get("km"),
+            "year": c.get("year"), "km": c.get("km"), "horas": c.get("horas"),
             "price": c.get("price"), "fecha": hoy,
         }
     limite = (date.today() - timedelta(days=HISTORIAL_DIAS)).isoformat()
@@ -111,12 +112,26 @@ def actualizar_mercado(mercado, coches):
 
 
 # ---------------- notificaciones ----------------
+def _etiqueta_coche(coche):
+    """Cabecera que canta la oportunidad según lo barato que esté."""
+    d = coche.get("dif_pct")
+    if d is None:
+        return "🚗 NUEVO"
+    if d <= -20:
+        return f"🔥🔥 GANGA URGENTE -{abs(d)}%"
+    if d <= -12:
+        return f"🔥 CHOLLO -{abs(d)}%"
+    if d < 0:
+        return f"✅ buen precio -{abs(d)}%"
+    return "🚗 NUEVO"
+
+
 def notif_whatsapp(coche, cfg):
     if not cfg.get("enabled"):
         return
     desc = (f"-{abs(coche['dif_pct'])}% bajo mercado"
             if coche.get("dif_pct") is not None else "sin valoración fiable")
-    txt = (f"🚗 CHOLLO {coche['source']}\n{coche['title']}\n"
+    txt = (f"{_etiqueta_coche(coche)} · {coche['source']}\n{coche['title']}\n"
            f"💶 {coche['price']} € ({desc})\n"
            f"Medio: {coche.get('precio_medio','?')} € · "
            f"{coche.get('year','?')} · {coche.get('km','?')} km\n{coche['url']}")
@@ -134,10 +149,60 @@ def notif_telegram(coche, cfg):
         return
     desc = (f"-{abs(coche['dif_pct'])}% bajo mercado"
             if coche.get("dif_pct") is not None else "sin valoración fiable")
-    txt = (f"🚗 <b>{coche['source']}</b>\n{coche['title']}\n"
+    txt = (f"<b>{_etiqueta_coche(coche)}</b> · {coche['source']}\n{coche['title']}\n"
            f"💶 <b>{coche['price']} €</b> ({desc})\n"
            f"Medio: {coche.get('precio_medio','?')} € · "
            f"{coche.get('year','?')} · {coche.get('km','?')} km\n{coche['url']}")
+    try:
+        requests.post(f"https://api.telegram.org/bot{cfg['bot_token']}/sendMessage",
+                      data={"chat_id": cfg["chat_id"], "text": txt,
+                            "parse_mode": "HTML"}, timeout=15)
+    except Exception as e:
+        log(f"  !! Telegram: {e}")
+
+
+# ---------- notificaciones MOTOS DE AGUA (horas, % vs mercado, etiqueta) ----------
+def _etiqueta_moto(item, margen):
+    if item.get("sospechoso"):
+        return "⚠️ SOSPECHOSO (¿timo/error?)"
+    if item.get("dif_pct") is not None and item["dif_pct"] <= -abs(margen):
+        return "🔥 GANGA"
+    return "👀 nuevo"
+
+
+def _desc_moto(item):
+    if item.get("dif_pct") is not None:
+        return f"-{abs(item['dif_pct'])}% vs mercado"
+    return "sin valoración fiable (pocos comparables)"
+
+
+def notif_whatsapp_moto(item, cfg, margen=10):
+    if not cfg.get("enabled"):
+        return
+    horas = f"{item['horas']} h" if item.get("horas") else "h ?"
+    txt = (f"🛥️ {_etiqueta_moto(item, margen)} · {item['source']}\n"
+           f"{item['title']}\n"
+           f"💶 {item['price']} € ({_desc_moto(item)})\n"
+           f"Medio: {item.get('precio_medio','?')} € · "
+           f"{item.get('year','?')} · {horas}\n{item['url']}")
+    try:
+        requests.get("https://api.callmebot.com/whatsapp.php",
+                     params={"phone": cfg["phone"], "text": txt, "apikey": cfg["apikey"]},
+                     timeout=20)
+    except Exception as e:
+        log(f"  !! WhatsApp: {e}")
+    time.sleep(3)
+
+
+def notif_telegram_moto(item, cfg, margen=10):
+    if not cfg.get("enabled"):
+        return
+    horas = f"{item['horas']} h" if item.get("horas") else "h ?"
+    txt = (f"🛥️ <b>{_etiqueta_moto(item, margen)}</b> · {item['source']}\n"
+           f"{item['title']}\n"
+           f"💶 <b>{item['price']} €</b> ({_desc_moto(item)})\n"
+           f"Medio: {item.get('precio_medio','?')} € · "
+           f"{item.get('year','?')} · {horas}\n{item['url']}")
     try:
         requests.post(f"https://api.telegram.org/bot{cfg['bot_token']}/sendMessage",
                       data={"chat_id": cfg["chat_id"], "text": txt,
@@ -164,10 +229,31 @@ def escribir_csv(coches, path):
             ]) + "\n")
 
 
+def escribir_csv_moto(items, path):
+    nuevo = not Path(path).exists()
+    with open(path, "a", encoding="utf-8") as f:
+        if nuevo:
+            f.write("fecha;portal;titulo;precio;precio_medio;dif_%;fiable;"
+                    "sospechoso;anio;horas;ciudad;url\n")
+        for c in items:
+            f.write(";".join([
+                f"{datetime.now():%Y-%m-%d %H:%M}", c["source"],
+                (c["title"] or "").replace(";", ","),
+                str(c.get("price") or ""), str(c.get("precio_medio") or ""),
+                str(c.get("dif_pct") if c.get("dif_pct") is not None else ""),
+                "si" if c.get("fiable") else "no",
+                "si" if c.get("sospechoso") else "no",
+                str(c.get("year") or ""), str(c.get("horas") or ""),
+                (c.get("city") or ""), c["url"],
+            ]) + "\n")
+
+
 # ---------------- pasada completa ----------------
 def pasada(cfg, headful):
     vistos = cargar_vistos()
     n = cfg["notificaciones"]
+    perfil = cfg.get("perfil", "coches")
+    es_moto = (perfil == "motos")
     activos = [p for p, on in cfg["portales_activos"].items()
                if on and not str(p).startswith("_")]
     log(f"Portales activos: {', '.join(activos)}")
@@ -206,13 +292,16 @@ def pasada(cfg, headful):
     universo = portales._dedupe(crudos)
     log(f"Total bruto (deduplicado): {len(universo)}")
 
-    # 1) filtros duros (incluye: modelo buscado, precio, km, etiqueta, motor, negativos)
+    # 1) filtros duros — según el perfil (coches o motos de agua)
     candidatos = []
     for c in universo:
-        ok, motivo = filtros.pasa_filtros_duros(c, cfg["busqueda"])
+        if es_moto:
+            ok, motivo = filtros.pasa_filtros_moto(c, cfg["busqueda"])
+        else:
+            ok, motivo = filtros.pasa_filtros_duros(c, cfg["busqueda"])
         if ok:
             candidatos.append(c)
-    log(f"Pasan filtros (modelo/precio/km/etiqueta/motor): {len(candidatos)}")
+    log(f"Pasan filtros: {len(candidatos)}")
 
     # 1b) actualizar la MEMORIA DE PRECIOS con los coches de hoy
     mercado = cargar_mercado()
@@ -224,8 +313,12 @@ def pasada(cfg, headful):
     # 2) valorar cada coche contra TODO el historial (no solo lo de hoy) y quedarnos con chollos
     chollos = []
     margen = cfg["busqueda"].get("margen_chollo_pct", 0)  # 0 = todo lo <= medio
+    sosp = cfg["busqueda"].get("sospechoso_pct", 60)
     for c in candidatos:
-        valoracion.valorar(c, mercado)
+        if es_moto:
+            valoracion.valorar_moto(c, mercado, sosp)
+        else:
+            valoracion.valorar(c, mercado)
         if c["id"] in vistos:
             continue
         if c.get("dif_pct") is None:
@@ -253,20 +346,35 @@ def pasada(cfg, headful):
     # 4) notificar
     if chollos:
         if n.get("csv", {}).get("enabled", True):
-            escribir_csv(chollos, BASE / n["csv"].get("path", "chollos.csv"))
+            if es_moto:
+                escribir_csv_moto(chollos, BASE / n["csv"].get("path", "chollos_motos.csv"))
+            else:
+                escribir_csv(chollos, BASE / n["csv"].get("path", "chollos.csv"))
         for c in chollos:
-            notif_whatsapp(c, n.get("whatsapp", {}))
-            notif_telegram(c, n.get("telegram", {}))
+            if es_moto:
+                notif_whatsapp_moto(c, n.get("whatsapp", {}), margen)
+                notif_telegram_moto(c, n.get("telegram", {}), margen)
+            else:
+                notif_whatsapp(c, n.get("whatsapp", {}))
+                notif_telegram(c, n.get("telegram", {}))
     log("Pasada terminada.\n")
 
 
 def main():
+    global VISTOS, MERCADO
     ap = argparse.ArgumentParser()
     ap.add_argument("--once", action="store_true")
     ap.add_argument("--headful", action="store_true")
+    ap.add_argument("--config", default=str(CONFIG),
+                    help="ruta al config (por defecto config.json = coches)")
     a = ap.parse_args()
-    cfg = cargar_cfg()
-    log("=== Radar de coches arrancado ===")
+    cfg = cargar_cfg(a.config)
+    perfil = cfg.get("perfil", "coches")
+    # Memoria separada por perfil para que coches y motos no se pisen.
+    if perfil != "coches":
+        VISTOS = BASE / f"vistos_{perfil}.json"
+        MERCADO = BASE / f"mercado_{perfil}.json"
+    log(f"=== Radar [{perfil}] arrancado ===")
     if a.once:
         pasada(cfg, a.headful)
         return
