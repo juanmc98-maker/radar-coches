@@ -156,17 +156,22 @@ def _norm_wallapop_moto(raw: dict, source: str) -> dict | None:
     if not title and price is None:
         return None
 
-    url = (raw.get("url") or raw.get("link") or raw.get("itemUrl")
-           or raw.get("web_slug") or "")
+    slug = raw.get("slug") or raw.get("web_slug") or ""
+    url = (raw.get("listing_url") or raw.get("share_url") or raw.get("url")
+           or raw.get("link") or raw.get("itemUrl") or slug or "")
     if url and not str(url).startswith("http"):
         url = f"https://es.wallapop.com/item/{url}"
-    item_id = (raw.get("id") or raw.get("itemId") or raw.get("adId")
-               or url or title[:25])
+    item_id = (raw.get("item_id") or raw.get("id") or raw.get("itemId")
+               or raw.get("adId") or slug or title[:25])
 
     desc = raw.get("description") or raw.get("descripcion") or ""
     texto = f"{title} {desc}"
 
     marca, modelo = _marca_modelo_moto(texto)
+    if raw.get("brand"):
+        marca = str(raw.get("brand")).lower()
+    if raw.get("model"):
+        modelo = str(raw.get("model")).lower()
     horas = _extraer_horas(texto)
     anyo = num(raw.get("year")) or _extraer_anyo(texto)
 
@@ -187,7 +192,7 @@ def _norm_wallapop_moto(raw: dict, source: str) -> dict | None:
 
     user = raw.get("user") if isinstance(raw.get("user"), dict) else {}
     seller = (raw.get("seller_type") or raw.get("sellerType")
-              or user.get("type") or "")
+              or raw.get("type") or user.get("type") or "")
 
     return {
         "id": f"{source.lower()}_{item_id}",

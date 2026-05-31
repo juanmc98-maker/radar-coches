@@ -117,16 +117,29 @@ _MOTO_AGUA_FUERTE = [
 # Modelos acuáticos (refuerzan cuando van con marca acuática)
 _MOTO_AGUA_MODELOS = [
     "gti", "gtx", "gtr", "rxp", "rxt", "spark", "wake", "fish pro", "fishpro",
-    "gp1800", "gp 1800", "vx cruiser", "vx deluxe", "vx limited", "fx cruiser",
-    "fx svho", "fx ho", "ex deluxe", "ex sport", "superjet", "super jet",
-    "jetblaster", "ultra 310", "ultra 300", "ultra lx", "stx", "sx-r",
-    "aquatrax",
+    "gp1800", "gp 1800", "gp1300", "vx", "vxr", "vx cruiser", "vx deluxe",
+    "vx limited", "fx", "fx cruiser", "fx svho", "fx ho", "ex deluxe",
+    "ex sport", "superjet", "super jet", "jetblaster", "ultra 310",
+    "ultra 300", "ultra lx", "stx", "sx-r", "aquatrax", "f-12", "r-12",
 ]
-# Estilos de moto de CALLE (si el anuncio trae motorbike_style con esto -> fuera)
+# Estilos de moto de CALLE (lista amplia, informativa)
 _ESTILOS_CALLE = [
     "scooter", "naked", "sport", "sportbike", "trail", "custom", "enduro",
     "cruiser", "touring", "cafe racer", "ciclomotor", "quad", "atv",
     "supermotard", "trial", "scrambler",
+]
+# Estilos INEQUÍVOCAMENTE de calle: si motorbike_style trae uno de estos -> fuera.
+# OJO: NO incluimos sport/cruiser/touring/custom porque las motos de agua usan
+# esos mismos nombres de modelo (Yamaha VX Cruiser, Sea-Doo GTI Sport...).
+_ESTILOS_SOLO_CALLE = [
+    "scooter", "naked", "enduro", "ciclomotor", "quad", "atv",
+    "supermotard", "trial", "scrambler", "cafe racer",
+]
+# Señales en el TEXTO de que es moto de carretera (no acuática)
+_MARCADORES_CALLE_TXT = [
+    "scooter", "xmax", "x max", "tmax", "t max", "pcx", "ciclomotor",
+    "quad", "atv", "naked", "enduro", "trial", "cafe racer", "supermotard",
+    "scrambler", "carnet a2", "carnet a1", "matricula",
 ]
 # Accesorios / piezas sueltas (si el TÍTULO es esto y no hay marca/modelo -> fuera)
 _ACCESORIOS = [
@@ -212,7 +225,7 @@ def pasa_filtros_moto(item: dict, cfg: dict) -> tuple[bool, str]:
 
     # moto de calle (por estilo declarado o por modelo de carretera)
     estilo = _norm(item.get("motorbike_style") or "")
-    if estilo and any(e in estilo for e in _ESTILOS_CALLE):
+    if estilo and any(e in estilo for e in _ESTILOS_SOLO_CALLE):
         return False, f"moto de calle (estilo: {estilo})"
     if any(x in t for x in ["xmax", "x max", "tmax", "t max", "pcx", "scooter de"]):
         return False, "moto de calle (modelo)"

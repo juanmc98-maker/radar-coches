@@ -294,6 +294,7 @@ def pasada(cfg, headful):
 
     # 1) filtros duros — según el perfil (coches o motos de agua)
     candidatos = []
+    descartes = {}
     for c in universo:
         if es_moto:
             ok, motivo = filtros.pasa_filtros_moto(c, cfg["busqueda"])
@@ -301,13 +302,19 @@ def pasada(cfg, headful):
             ok, motivo = filtros.pasa_filtros_duros(c, cfg["busqueda"])
         if ok:
             candidatos.append(c)
+        else:
+            descartes[motivo] = descartes.get(motivo, 0) + 1
     log(f"Pasan filtros: {len(candidatos)}")
+    if descartes:
+        resumen = ", ".join(f"{m} ({v})" for m, v in
+                            sorted(descartes.items(), key=lambda x: -x[1]))
+        log(f"Descartados {sum(descartes.values())} -> {resumen}")
 
     # 1b) actualizar la MEMORIA DE PRECIOS con los coches de hoy
     mercado = cargar_mercado()
     mercado = actualizar_mercado(mercado, candidatos)
     guardar_mercado(mercado)
-    log(f"Memoria de precios: {len(mercado)} coches acumulados "
+    log(f"Memoria de precios: {len(mercado)} anuncios acumulados "
         f"(últimos {HISTORIAL_DIAS} días)")
 
     # 2) valorar cada coche contra TODO el historial (no solo lo de hoy) y quedarnos con chollos
