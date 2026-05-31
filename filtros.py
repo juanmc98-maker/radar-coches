@@ -304,6 +304,11 @@ _CAMPER_ACCESORIOS = [
     "matalas", "matalàs", "cable", "inversor", "sandalia", "zapato",
     "zapatilla", "bota",
 ]
+# Estructuras que NO son vehículo camper (no se conducen): bungalows, casas móviles
+_NO_CAMPER_ESTRUCTURA = [
+    "bungalow", "mobil home", "mobilhome", "mobile home", "mobil-home",
+    "casa movil", "casa prefabricada", "prefabricada", "modulo habitable",
+]
 
 
 def es_camper(item: dict) -> bool:
@@ -340,6 +345,11 @@ def pasa_filtros_camper(item: dict, cfg: dict) -> tuple[bool, str]:
     """Filtros duros para campers/autocaravanas con baño y ducha."""
     if not es_camper(item):
         return False, "no es camper/autocaravana"
+
+    # bungalow / casa móvil / prefabricada: no es un vehículo
+    titulo = _norm(item.get("title") or "")
+    if any(x in titulo for x in _NO_CAMPER_ESTRUCTURA):
+        return False, "es bungalow/casa movil (no vehiculo)"
 
     t = _texto_moto(item)
 
